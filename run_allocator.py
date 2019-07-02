@@ -21,5 +21,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+import json
+
 from allocatorbot import AllocatorBot
-from discordbot import DiscordBot
+
+
+CREDS = {}
+
+'''
+
+expects a file called "creds.json" in your working directory
+with format of
+{
+    "username": YOURVUWUSERNAME,
+    "password": YOURVUWPASSWORD,
+    "token": YOURDISCORDTOKEN,
+}
+
+'''
+with open('creds.json', 'r') as f:
+            CREDS = json.loads(f.read())
