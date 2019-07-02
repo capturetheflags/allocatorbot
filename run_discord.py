@@ -1,4 +1,5 @@
-'''MIT License
+'''
+MIT License
 
 Copyright (c) 2019 westiemcb
 
@@ -20,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
+
+#run the discord client and allocator scraping bot together
 
 import json
 
