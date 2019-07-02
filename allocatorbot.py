@@ -39,6 +39,7 @@ class AllocatorEntry:
                                                     ['DescendantFurtherChoicesRequired',
                                                      'DirectFurtherChoicesRequired']})
         self.problem = soup.find('div', {'class':'ExistingProblemPanel'})
+        self.has_problem = self.problem is not None
         self.problem_heading = ''
         self.problem_text = ''
         self.required = self.nofurtherchoices is None
@@ -61,9 +62,9 @@ class AllocatorEntry:
             
 
 class AllocatorBot:
-    def __init__(self, credentials, session=None):
+    def __init__(self, data, session=None):
         self.session = session
-        self.credentials = credentials
+        self.data = data
 
     async def get_courses(self):
         data = {
@@ -74,8 +75,8 @@ class AllocatorBot:
             '__EVENTTARGET':'',
             '__EVENTARGUMENT':'',
             '__EVENTVALIDATION':'',
-            'ctl00$MainContent$userName':self.credentials['username'],
-            'ctl00$MainContent$password':self.credentials['password'],
+            'ctl00$MainContent$userName':self.data['username'],
+            'ctl00$MainContent$password':self.data['password'],
             'ctl00$MainContent$doLogin':'Login',
         }
         if not self.session:
@@ -93,12 +94,8 @@ class AllocatorBot:
             listing = BeautifulSoup(await response.text(), 'lxml')
             course_list = listing.find('ul', {'class':'TopNodes'})
             courses = course_list.find_all('div', {'class':'Ao Ao_MO Ao_1'})
-            for course in courses:
-                c = AllocatorEntry(course)
-                if c.required:
-                    print(f'{c}')
             
-            ret = [course.text.strip() for course in courses]
+            ret = [AllocatorEntry(course) for course in courses]
             return ret        
     
     async def run(self):

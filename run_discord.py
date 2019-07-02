@@ -29,22 +29,23 @@ import json
 from discordbot import DiscordBot
 
 
-CREDS = {}
+data = {}
 
 '''
 
-expects a file called "creds.json" in your working directory
+expects a file called "data.json" in your working directory
 with format of
 {
     "username": YOURVUWUSERNAME,
     "password": YOURVUWPASSWORD,
     "token": YOURDISCORDTOKEN,
+    "channel": CHANNELID
 }
 
 '''
-with open('creds.json', 'r') as f:
-            CREDS = json.loads(f.read())
+with open('data.json', 'r') as f:
+            data = json.loads(f.read())
             
         
-db = DiscordBot(CREDS)
-db.run(CREDS['token'])
+db = DiscordBot(data)
+db.run(data['token'])

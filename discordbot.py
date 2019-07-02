@@ -27,20 +27,23 @@ SOFTWARE.
 import aiohttp
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from allocatorbot import AllocatorBot
 
 
 class DiscordBot(commands.Bot):
-    def __init__(self, credentials, *args, **options):
+    def __init__(self, data, *args, **options):
         super().__init__(command_prefix=self._get_prefixes, description='myAllocator scrape bot'
                           ,game=discord.Game(name='Minecraft'))
         self.session = None
         self.ab = None
         self.add_command(self.bot_exit)
         self.add_command(self.check_allocator)
-        self.credentials = credentials
+        self.add_command(self.add_allocator_role)
+        self.data = data
+        self.allocator_channel = data['channel']
+        self.allocator_role = None
     
     def _get_prefixes(self, _, message):
         prefixes = ['.', '?', '>']
@@ -48,20 +51,51 @@ class DiscordBot(commands.Bot):
     
     async def on_ready(self):
         self.session = aiohttp.ClientSession()
-        self.ab = AllocatorBot(self.credentials, self.session)
+        self.ab = AllocatorBot(self.data, self.session)
+        self.check_allocator_task.start()
+        self.allocator_channel = self.get_channel(self.allocator_channel)
+        self.allocator_role = discord.utils.find(lambda r: r.name.lower() == 'allocator',
+                                                 self.allocator_channel.guild.roles)
+        if self.allocator_channel is None:
+            print('Channel cannot be found with the specified ID.')
+        elif self.allocator_role is None:
+            print('There does not seem to be an allocator role set up in specified guild/channel')
+        print('Ready')
+        print(f'Current configuration:\nDiscord Client is {self.user}\nVUW allocator user is {self.data["username"]}')
         
     @commands.command(name='check')
     async def check_allocator(ctx):
         await ctx.send('Checking allocator...')
-        result = '\n'.join(await ctx.bot.ab.get_courses())
+        result = '\n'.join([str(s) for s in await ctx.bot.ab.get_courses()])
         await ctx.send(f'```\n{result}```')
+        
+    @commands.command(name='role')
+    async def add_allocator_role(ctx):
+        if ctx.bot.allocator_role in ctx.author.roles:
+            await ctx.author.remove_roles(ctx.bot.allocator_role)
+            await ctx.send('Removed allocator role.')
+        else:
+            await ctx.author.add_roles(ctx.bot.allocator_role)
+            await ctx.send('Gave allocator role.')
     
     @commands.command(name='exit', hidden=True)
     @commands.is_owner()
     async def bot_exit(ctx):
         try:
             await ctx.send('Exiting')
+            ctx.bot.check_allocator_task.cancel()
         except (AttributeError, discord.Forbidden):
             pass
         await ctx.bot.session.close()
         await ctx.bot.logout()
+        
+    @tasks.loop(seconds=10)
+    async def check_allocator_task(self):
+        await self.allocator_channel.send('Checking allocator...')
+        result = await self.ab.get_courses()
+        for course in result:
+            if course.required:
+                if course.has_problem:
+                    await self.allocator_channel.send(f'{course}')
+                else:
+                    await self.allocator_channel.send(f'{self.allocator_role.mention} {course}')

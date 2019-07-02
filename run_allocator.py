@@ -30,23 +30,22 @@ import asyncio
 from allocatorbot import AllocatorBot
 
 
-CREDS = {}
+data = {}
 
 '''
 
-expects a file called "creds.json" in your working directory
+expects a file called "data.json" in your working directory
 with format of
 {
     "username": YOURVUWUSERNAME,
     "password": YOURVUWPASSWORD,
-    "token": YOURDISCORDTOKEN,
 }
 
 '''
-with open('creds.json', 'r') as f:
-            CREDS = json.loads(f.read())
+with open('data.json', 'r') as f:
+            data = json.loads(f.read())
 
-ab = AllocatorBot(CREDS)
+ab = AllocatorBot(data)
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(ab.run())
