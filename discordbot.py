@@ -25,6 +25,7 @@ SOFTWARE.
 # class implementing super basic discord bot functionality
 
 import aiohttp
+import datetime
 
 import discord
 from discord.ext import commands, tasks
@@ -91,11 +92,10 @@ class DiscordBot(commands.Bot):
         
     @tasks.loop(seconds=10)
     async def check_allocator_task(self):
-        await self.allocator_channel.send('Checking allocator...')
         result = await self.ab.get_courses()
         for course in result:
             if course.required:
                 if course.has_problem:
-                    await self.allocator_channel.send(f'{course}')
+                    await self.allocator_channel.send(f'[{datetime.datetime.now()}] {course}')
                 else:
-                    await self.allocator_channel.send(f'{self.allocator_role.mention} {course}')
+                    await self.allocator_channel.send(f'[{datetime.datetime.now()}] {self.allocator_role.mention} {course}')
