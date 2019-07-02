@@ -30,6 +30,36 @@ from bs4 import BeautifulSoup
 
 LOGIN_URL = 'https://student-sa-odd.victoria.ac.nz/Authentication/Login.aspx?ReturnUrl=%2fStudent.aspx'
 
+class AllocatorEntry:
+    def __init__(self, soup):
+        self.name = soup.find('span', {'class':'Name'})
+        self.description = soup.find('span', {'class':'Description'})
+        self.nofurtherchoices = soup.find('span', {'class':'NoFurtherChoicesRequired'})
+        self.furtherchoices = soup.find('span',{'class':
+                                                    ['DescendantFurtherChoicesRequired',
+                                                     'DirectFurtherChoicesRequired']})
+        self.problem = soup.find('div', {'class':'ExistingProblemPanel'})
+        self.problem_heading = ''
+        self.problem_text = ''
+        self.required = self.nofurtherchoices is None
+        
+        if self.required:
+            if self.problem is not None:
+                heading = self.problem.find('span', {'class':'heading'})
+                reason = self.problem.find('span', {'class':'reason'})
+                self.problem_heading = heading.text
+                self.problem_text = reason.text
+                
+    def __str__(self):
+        ret = None
+        if self.required:
+            ret = f'{self.name.text} {self.description.text} {self.furtherchoices.text} '\
+                  f'{self.problem_heading} {self.problem_text}'.strip()
+        else:
+            ret = f'{self.name.text} {self.description.text} {self.nofurtherchoices.text}'
+        return ret
+            
+
 class AllocatorBot:
     def __init__(self, credentials, session=None):
         self.session = session
@@ -64,12 +94,14 @@ class AllocatorBot:
             course_list = listing.find('ul', {'class':'TopNodes'})
             courses = course_list.find_all('div', {'class':'Ao Ao_MO Ao_1'})
             for course in courses:
-                print(course)
-            
+                c = AllocatorEntry(course)
+                if c.required:
+                    print(f'{c}')
             
             ret = [course.text.strip() for course in courses]
             return ret        
     
     async def run(self):
-        await self.get_courses()
+        result = '\n'.join(await self.get_courses())
+        #print(result)
         await self.session.close()

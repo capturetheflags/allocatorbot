@@ -25,6 +25,7 @@ SOFTWARE.
 # run the allocator scraper by itself
 
 import json
+import asyncio
 
 from allocatorbot import AllocatorBot
 
@@ -44,3 +45,8 @@ with format of
 '''
 with open('creds.json', 'r') as f:
             CREDS = json.loads(f.read())
+
+ab = AllocatorBot(CREDS)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(ab.run())
